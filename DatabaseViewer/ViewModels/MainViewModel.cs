@@ -2,6 +2,9 @@ using Microsoft.Toolkit.Mvvm.ComponentModel;
 using Microsoft.Toolkit.Mvvm.Input;
 using DatabaseViewer.Models;
 using System.Collections.ObjectModel;
+using Microsoft.EntityFrameworkCore;
+using System.Windows;
+using System;
 
 namespace DatabaseViewer.ViewModels
 {
@@ -31,10 +34,23 @@ namespace DatabaseViewer.ViewModels
 
         private void Connect()
         {
-            // Здесь разместите код для установки соединения с базой данных
-            // Используйте ConnectionString для подключения к соответствующей базе данных
+            try
+            {
+                using (var dbContext = new DatabaseContext(ConnectionString))
+                {
+                    dbContext.Database.OpenConnection();
 
-            // Получите данные из базы данных и сохраните их в Items
+                   //////////////////////////////////////////
+
+                    dbContext.Database.CloseConnection();
+                }
+
+                MessageBox.Show("Connected to the database.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error connecting to the database: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
     }
 }
