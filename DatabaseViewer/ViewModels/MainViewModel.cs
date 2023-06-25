@@ -58,7 +58,6 @@ namespace DatabaseViewer.ViewModels
             }
         }
 
-       
 
         private void Connect()
         {
@@ -71,8 +70,6 @@ namespace DatabaseViewer.ViewModels
                     // Выполнение запроса на выборку всех записей из таблицы "Items"
                     var query = dbContext.Items.ToList();
                     Items = new ObservableCollection<Item>(query);
-                    var newItem = new Item { Id = 1, Name = "John", Surname = "Doe", Year = 1990, NumContrakt = "ABC123", Pay = 1000 };
-                    AddItem(newItem);
                     dbContext.Database.CloseConnection();
                 }
 
