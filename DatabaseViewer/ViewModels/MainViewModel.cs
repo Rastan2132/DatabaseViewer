@@ -112,6 +112,10 @@ namespace DatabaseViewer.ViewModels
 
                 MessageBox.Show("Item added successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
+            catch (MySqlException ex)
+            {
+                MessageBox.Show($"Error adding item: {ex.Message}\nError code: {ex.ErrorCode}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error adding item: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -121,6 +125,7 @@ namespace DatabaseViewer.ViewModels
                 CloseConnection();
             }
         }
+
 
         private void RemoveItem(Item itemToRemove)
         {
