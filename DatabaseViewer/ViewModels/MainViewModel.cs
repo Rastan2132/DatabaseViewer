@@ -2,6 +2,7 @@
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 using Microsoft.Toolkit.Mvvm.ComponentModel;
 using Microsoft.Toolkit.Mvvm.Input;
 using DatabaseViewer.Models;
@@ -15,7 +16,7 @@ namespace DatabaseViewer.ViewModels
         private ObservableCollection<Item> items;
         private ObservableCollection<Item> sortedItems;
         private Item newItem;
-        private string sortBy;
+        private ComboBoxItem? sortBy;
 
         public string ConnectionString
         {
@@ -41,7 +42,7 @@ namespace DatabaseViewer.ViewModels
             set => SetProperty(ref newItem, value);
         }
 
-        public string SortBy
+        public ComboBoxItem? SortBy
         {
             get => sortBy;
             set
@@ -224,7 +225,9 @@ namespace DatabaseViewer.ViewModels
             if (Items == null)
                 return;
 
-            switch (SortBy)
+            var itemContent = SortBy is not null ? SortBy.Content : "";
+
+            switch (itemContent)
             {
                 case "Id":
                     SortedItems = new ObservableCollection<Item>(Items.OrderBy(item => item.Id));
