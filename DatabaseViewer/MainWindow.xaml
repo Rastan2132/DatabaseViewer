@@ -4,8 +4,10 @@
         xmlns:local="clr-namespace:DatabaseViewer.ViewModels"
         Title="Database Viewer" Height="450" Width="1000">
     <Window.DataContext>
-        <local:MainViewModel/>
+        <local:MainViewModel />
     </Window.DataContext>
+
+
 
     <Grid>
         <Grid.RowDefinitions>
@@ -18,9 +20,17 @@
             <TextBlock Text="ConnectionString:" VerticalAlignment="Center"/>
             <TextBox Text="{Binding ConnectionString}" Width="400" Margin="10"/>
             <Button Content="Connect" Command="{Binding ConnectCommand}" Margin="10"/>
+            <TextBlock Text="Sort By:" VerticalAlignment="Center" Margin="10"/>
+            <ComboBox SelectedItem="{Binding SortBy}">
+                <ComboBoxItem Content="Id" />
+                <ComboBoxItem Content="Name" />
+                <ComboBoxItem Content="Surname" />
+                <ComboBoxItem Content="Year" />
+                <ComboBoxItem Content="NumContrakt" />
+                <ComboBoxItem Content="Pay" />
+            </ComboBox>
         </StackPanel>
-
-        <ListView Grid.Row="1" ItemsSource="{Binding Items}" Margin="10">
+        <ListView Grid.Row="1" ItemsSource="{Binding SortedItems}" Margin="10">
             <ListView.View>
                 <GridView>
                     <GridViewColumn Width="40" Header="Id" DisplayMemberBinding="{Binding Id}"/>
@@ -59,9 +69,8 @@
                 <TextBox x:Name="txtPay" Width="100" Text="{Binding NewItem.Pay}"/>
             </StackPanel>
 
-            <Button Width="100" Content="Add " Command="{Binding AddCommand}" Margin="10"/>
+            <Button Width="100" Content="Add" Command="{Binding AddCommand}" Margin="10"/>
             <Button Width="100" Content="Remove" Command="{Binding RemoveCommand}" Margin="10"/>
         </StackPanel>
     </Grid>
-
 </Window>

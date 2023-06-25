@@ -2,10 +2,10 @@ using Microsoft.Toolkit.Mvvm.ComponentModel;
 using Microsoft.Toolkit.Mvvm.Input;
 using DatabaseViewer.Models;
 using System.Collections.ObjectModel;
-using Microsoft.EntityFrameworkCore;
 using System.Windows;
 using System;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
 
 namespace DatabaseViewer.ViewModels
 {
@@ -13,7 +13,9 @@ namespace DatabaseViewer.ViewModels
     {
         private string connectionString;
         private ObservableCollection<Item> items;
+        private ObservableCollection<Item> sortedItems;
         private Item newItem;
+        private string sortBy;
 
         public string ConnectionString
         {
@@ -27,10 +29,28 @@ namespace DatabaseViewer.ViewModels
             set => SetProperty(ref items, value);
         }
 
+        public ObservableCollection<Item> SortedItems
+        {
+            get => sortedItems;
+            set => SetProperty(ref sortedItems, value);
+        }
+
         public Item NewItem
         {
             get => newItem;
             set => SetProperty(ref newItem, value);
+        }
+
+        public string SortBy
+        {
+            get => sortBy;
+            set
+            {
+                if (SetProperty(ref sortBy, value))
+                {
+                    SortItems();
+                }
+            }
         }
 
         public IRelayCommand ConnectCommand { get; }
@@ -45,6 +65,12 @@ namespace DatabaseViewer.ViewModels
 
             // Инициализация нового элемента
             NewItem = new Item();
+
+            // Инициализация SortedItems
+            SortedItems = new ObservableCollection<Item>();
+
+            // Установка начальной сортировки
+            SortItems();
         }
 
         private void Add()
@@ -128,17 +154,50 @@ namespace DatabaseViewer.ViewModels
                 {
                     dbContext.Database.OpenConnection();
 
-                    // Выполнение запроса на выборку всех записей из таблицы "Items"
-                    var query = dbContext.Items.ToList();
-                    Items = new ObservableCollection<Item>(query);
+                    // Загрузка данных из базы данных
+                    Items = new ObservableCollection<Item>(dbContext.Items);
+
                     dbContext.Database.CloseConnection();
                 }
+
+                SortItems();
 
                 MessageBox.Show("Connected to the database.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error connecting to the database: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void SortItems()
+        {
+            if (Items == null)
+                return;
+
+            switch (SortBy)
+            {
+                case "Id":
+                    SortedItems = new ObservableCollection<Item>(Items.OrderBy(item => item.Id));
+                    break;
+                case "Name":
+                    SortedItems = new ObservableCollection<Item>(Items.OrderBy(item => item.Name));
+                    break;
+                case "Surname":
+                    SortedItems = new ObservableCollection<Item>(Items.OrderBy(item => item.Surname));
+                    break;
+                case "Year":
+                    SortedItems = new ObservableCollection<Item>(Items.OrderBy(item => item.Year));
+                    break;
+                case "NumContrakt":
+                    SortedItems = new ObservableCollection<Item>(Items.OrderBy(item => item.NumContrakt));
+                    break;
+                case "Pay":
+                    SortedItems = new ObservableCollection<Item>(Items.OrderBy(item => item.Pay));
+                    break;
+                default:
+                    SortedItems = Items;
+                    break;
             }
         }
     }
