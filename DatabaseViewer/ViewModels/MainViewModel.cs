@@ -5,7 +5,7 @@ using System.Windows;
 using Microsoft.Toolkit.Mvvm.ComponentModel;
 using Microsoft.Toolkit.Mvvm.Input;
 using DatabaseViewer.Models;
-using Microsoft.EntityFrameworkCore;
+using System.Data.SqlClient;
 
 namespace DatabaseViewer.ViewModels
 {
@@ -92,14 +92,20 @@ namespace DatabaseViewer.ViewModels
         {
             try
             {
-                using (var dbContext = new DatabaseContext(ConnectionString))
+                using (var connection = new SqlConnection(ConnectionString))
                 {
-                    dbContext.Database.OpenConnection();
+                    connection.Open();
 
-                    dbContext.Items.Add(newItem);
-                    dbContext.SaveChanges();
+                    var command = new SqlCommand("INSERT INTO Items (Name, Surname, Year, NumContrakt, Pay) VALUES (@Name, @Surname, @Year, @NumContrakt, @Pay)", connection);
+                    command.Parameters.AddWithValue("@Name", newItem.Name);
+                    command.Parameters.AddWithValue("@Surname", newItem.Surname);
+                    command.Parameters.AddWithValue("@Year", newItem.Year);
+                    command.Parameters.AddWithValue("@NumContrakt", newItem.NumContrakt);
+                    command.Parameters.AddWithValue("@Pay", newItem.Pay);
 
-                    dbContext.Database.CloseConnection();
+                    command.ExecuteNonQuery();
+
+                    connection.Close();
                 }
 
                 Items.Add(newItem);
@@ -117,14 +123,16 @@ namespace DatabaseViewer.ViewModels
         {
             try
             {
-                using (var dbContext = new DatabaseContext(ConnectionString))
+                using (var connection = new SqlConnection(ConnectionString))
                 {
-                    dbContext.Database.OpenConnection();
+                    connection.Open();
 
-                    dbContext.Items.Remove(itemToRemove);
-                    dbContext.SaveChanges();
+                    var command = new SqlCommand("DELETE FROM Items WHERE Id = @Id", connection);
+                    command.Parameters.AddWithValue("@Id", itemToRemove.Id);
 
-                    dbContext.Database.CloseConnection();
+                    command.ExecuteNonQuery();
+
+                    connection.Close();
                 }
 
                 Items.Remove(itemToRemove);
@@ -142,19 +150,30 @@ namespace DatabaseViewer.ViewModels
         {
             try
             {
-                using (var dbContext = new DatabaseContext(ConnectionString))
+                using (var connection = new SqlConnection(ConnectionString))
                 {
-                    dbContext.Database.OpenConnection();
+                    connection.Open();
 
                     // Загрузка данных из базы данных
                     Items.Clear();
-                    var items = dbContext.Items.ToList();
-                    foreach (var item in items)
+                    var command = new SqlCommand("SELECT * FROM Items", connection);
+                    var reader = command.ExecuteReader();
+                    while (reader.Read())
                     {
+                        var item = new Item
+                        {
+                            Id = (int)reader["Id"],
+                            Name = (string)reader["Name"],
+                            Surname = (string)reader["Surname"],
+                            Year = (int)reader["Year"],
+                            NumContrakt = (string)reader["NumContrakt"],
+                            Pay = (decimal)reader["Pay"]
+                        };
+
                         Items.Add(item);
                     }
 
-                    dbContext.Database.CloseConnection();
+                    connection.Close();
                 }
 
                 SortItems();
