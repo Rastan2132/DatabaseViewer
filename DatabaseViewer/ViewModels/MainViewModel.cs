@@ -57,6 +57,15 @@ namespace DatabaseViewer.ViewModels
         public IRelayCommand AddCommand { get; }
         public IRelayCommand RemoveCommand { get; }
 
+        private int NewId
+        {
+            get
+            {
+                var lastId = Items.Select(item => item.Id).DefaultIfEmpty().Max();
+                return lastId + 1;
+            }
+        }
+
         public MainViewModel()
         {
             ConnectCommand = new RelayCommand(Connect);
@@ -80,7 +89,10 @@ namespace DatabaseViewer.ViewModels
             AddItem(NewItem);
 
             // Очистка полей для ввода
-            NewItem = new Item();
+            NewItem = new Item()
+            {
+                Id = NewId
+            };
         }
 
         private void Remove()
@@ -103,7 +115,7 @@ namespace DatabaseViewer.ViewModels
                 {
                     connection.Open();
 
-                    var command = new MySqlCommand("INSERT INTO user (Name, Surname, Year, NumComtrakt, Pay) VALUES (@Name, @Surname, @Year, @NumComtrakt, @Pay)", connection);
+                    var command = new MySqlCommand("INSERT INTO Items (Name, Surname, Year, NumComtrakt, Pay) VALUES (@Name, @Surname, @Year, @NumComtrakt, @Pay)", connection);
                     command.Parameters.AddWithValue("@Name", newItem.Name);
                     command.Parameters.AddWithValue("@Surname", newItem.Surname);
 
@@ -139,7 +151,7 @@ namespace DatabaseViewer.ViewModels
                 {
                     connection.Open();
 
-                    var command = new MySqlCommand("DELETE FROM user WHERE Id = @Id", connection);
+                    var command = new MySqlCommand("DELETE FROM Items WHERE Id = @Id", connection);
                     command.Parameters.AddWithValue("@Id", itemToRemove.Id);
 
                     command.ExecuteNonQuery();
@@ -149,6 +161,11 @@ namespace DatabaseViewer.ViewModels
 
                 Items.Remove(itemToRemove);
                 SortItems();
+                NewItem = new Item()
+                {
+                    Id = NewId
+                };
+
 
                 MessageBox.Show("Item removed successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
@@ -168,18 +185,18 @@ namespace DatabaseViewer.ViewModels
 
                     // Загрузка данных из базы данных
                     Items.Clear();
-                    var command = new MySqlCommand("SELECT * FROM user", connection);
+                    var command = new MySqlCommand("SELECT * FROM Items", connection);
                     var reader = command.ExecuteReader();
                     while (reader.Read())
                     {
                         var item = new Item
                         {
-                            Id = (int)reader["Id"],
+                            Id = (int)(uint)reader["Id"],
                             Name = (string)reader["Name"],
                             Surname = (string)reader["Surname"],
                             Year = ((DateTime)reader["Year"]).Year,
-                            NumContrakt = ((int)reader["NumComtrakt"]).ToString(),
-                            Pay = (int)reader["Pay"]
+                            NumContrakt = ((uint)reader["NumComtrakt"]).ToString(),
+                            Pay = new decimal((int)reader["Pay"])
                         };
 
                         Items.Add(item);
@@ -189,6 +206,10 @@ namespace DatabaseViewer.ViewModels
                 }
 
                 SortItems();
+                NewItem = new Item()
+                {
+                    Id = NewId
+                };
 
                 MessageBox.Show("Connected to the database.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
