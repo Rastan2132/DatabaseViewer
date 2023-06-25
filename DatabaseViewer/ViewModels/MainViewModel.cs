@@ -1,4 +1,4 @@
-using System;
+п»їusing System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
@@ -16,7 +16,7 @@ namespace DatabaseViewer.ViewModels
         private ObservableCollection<Item> sortedItems;
         private Item newItem;
         private string sortBy;
-        private MySqlConnection connection; // Добавлено поле для хранения соединения с базой данных
+        private MySqlConnection connection; // Г„Г®ГЎГ ГўГ«ГҐГ­Г® ГЇГ®Г«ГҐ Г¤Г«Гї ГµГ°Г Г­ГҐГ­ГЁГї Г±Г®ГҐГ¤ГЁГ­ГҐГ­ГЁГї Г± ГЎГ Г§Г®Г© Г¤Г Г­Г­Г»Гµ
 
         public string ConnectionString
         {
@@ -64,31 +64,31 @@ namespace DatabaseViewer.ViewModels
             AddCommand = new RelayCommand(Add);
             RemoveCommand = new RelayCommand<Item>(Remove);
 
-            // Инициализация нового элемента
+            // Г€Г­ГЁГ¶ГЁГ Г«ГЁГ§Г Г¶ГЁГї Г­Г®ГўГ®ГЈГ® ГЅГ«ГҐГ¬ГҐГ­ГІГ 
             NewItem = new Item();
 
-            // Инициализация коллекции Items
+            // Г€Г­ГЁГ¶ГЁГ Г«ГЁГ§Г Г¶ГЁГї ГЄГ®Г«Г«ГҐГЄГ¶ГЁГЁ Items
             Items = new ObservableCollection<Item>();
 
-            // Инициализация коллекции SortedItems
+            // Г€Г­ГЁГ¶ГЁГ Г«ГЁГ§Г Г¶ГЁГї ГЄГ®Г«Г«ГҐГЄГ¶ГЁГЁ SortedItems
             SortedItems = new ObservableCollection<Item>();
 
-            // Установка начальной сортировки
+            // Г“Г±ГІГ Г­Г®ГўГЄГ  Г­Г Г·Г Г«ГјГ­Г®Г© Г±Г®Г°ГІГЁГ°Г®ГўГЄГЁ
             SortItems();
         }
 
         private void Add()
         {
-            // Добавление нового элемента
+            // Г„Г®ГЎГ ГўГ«ГҐГ­ГЁГҐ Г­Г®ГўГ®ГЈГ® ГЅГ«ГҐГ¬ГҐГ­ГІГ 
             AddItem(NewItem);
 
-            // Очистка полей для ввода
+            // ГЋГ·ГЁГ±ГІГЄГ  ГЇГ®Г«ГҐГ© Г¤Г«Гї ГўГўГ®Г¤Г 
             NewItem = new Item();
         }
 
         private void Remove(Item itemToRemove)
         {
-            // Удаление элемента
+            // Г“Г¤Г Г«ГҐГ­ГЁГҐ ГЅГ«ГҐГ¬ГҐГ­ГІГ 
             RemoveItem(itemToRemove);
         }
 
@@ -159,7 +159,7 @@ namespace DatabaseViewer.ViewModels
             {
                 OpenConnection();
 
-                // Загрузка данных из базы данных
+                // Г‡Г ГЈГ°ГіГ§ГЄГ  Г¤Г Г­Г­Г»Гµ ГЁГ§ ГЎГ Г§Г» Г¤Г Г­Г­Г»Гµ
                 Items.Clear();
                 var command = new MySqlCommand("SELECT * FROM user", connection);
                 var reader = command.ExecuteReader();
