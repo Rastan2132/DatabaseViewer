@@ -66,7 +66,10 @@ namespace DatabaseViewer.ViewModels
             // Инициализация нового элемента
             NewItem = new Item();
 
-            // Инициализация SortedItems
+            // Инициализация коллекции Items
+            Items = new ObservableCollection<Item>();
+
+            // Инициализация коллекции SortedItems
             SortedItems = new ObservableCollection<Item>();
 
             // Установка начальной сортировки
@@ -96,11 +99,11 @@ namespace DatabaseViewer.ViewModels
                 {
                     connection.Open();
 
-                    var command = new MySqlCommand("INSERT INTO Items (Name, Surname, Year, NumContrakt, Pay) VALUES (@Name, @Surname, @Year, @NumContrakt, @Pay)", connection);
+                    var command = new MySqlCommand("INSERT INTO user (Name, Surname, Year, NumContrakt, Pay) VALUES (@Name, @Surname, @Year, @NumContrakt, @Pay)", connection);
                     command.Parameters.AddWithValue("@Name", newItem.Name);
                     command.Parameters.AddWithValue("@Surname", newItem.Surname);
                     command.Parameters.AddWithValue("@Year", newItem.Year);
-                    command.Parameters.AddWithValue("@NumContrakt", newItem.NumContrakt);
+                    command.Parameters.AddWithValue("@NumComtrakt", newItem.NumContrakt);
                     command.Parameters.AddWithValue("@Pay", newItem.Pay);
 
                     command.ExecuteNonQuery();
@@ -127,7 +130,7 @@ namespace DatabaseViewer.ViewModels
                 {
                     connection.Open();
 
-                    var command = new MySqlCommand("DELETE FROM Items WHERE Id = @Id", connection);
+                    var command = new MySqlCommand("DELETE FROM user WHERE Id = @Id", connection);
                     command.Parameters.AddWithValue("@Id", itemToRemove.Id);
 
                     command.ExecuteNonQuery();
@@ -156,7 +159,7 @@ namespace DatabaseViewer.ViewModels
 
                     // Загрузка данных из базы данных
                     Items.Clear();
-                    var command = new MySqlCommand("SELECT * FROM Items", connection);
+                    var command = new MySqlCommand("SELECT * FROM user", connection);
                     var reader = command.ExecuteReader();
                     while (reader.Read())
                     {
@@ -165,9 +168,10 @@ namespace DatabaseViewer.ViewModels
                             Id = (int)reader["Id"],
                             Name = (string)reader["Name"],
                             Surname = (string)reader["Surname"],
-                            Year = (int)reader["Year"],
-                            NumContrakt = (string)reader["NumContrakt"],
-                            Pay = (decimal)reader["Pay"]
+                            Year = ((DateTime)reader["Year"]).Year,
+                            NumContrakt = ((int)reader["NumComtrakt"]).ToString(),
+                            Pay = (int)reader["Pay"]
+
                         };
 
                         Items.Add(item);
@@ -212,7 +216,7 @@ namespace DatabaseViewer.ViewModels
                     SortedItems = new ObservableCollection<Item>(Items.OrderBy(item => item.Pay));
                     break;
                 default:
-                    SortedItems = Items;
+                    SortedItems = new ObservableCollection<Item>(Items);
                     break;
             }
         }
