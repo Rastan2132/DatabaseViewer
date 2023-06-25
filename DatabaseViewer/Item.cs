@@ -8,5 +8,7 @@ namespace DatabaseViewer.Models
         public int Year { get; set; }
         public string NumContrakt { get; set; }
         public decimal Pay { get; set; }
+
     }
+
 }

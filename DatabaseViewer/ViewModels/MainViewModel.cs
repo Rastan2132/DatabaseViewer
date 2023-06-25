@@ -32,6 +32,33 @@ namespace DatabaseViewer.ViewModels
         {
             ConnectCommand = new RelayCommand(Connect);
         }
+        private void AddItem(Item newItem)
+        {
+            try
+            {
+                using (var dbContext = new DatabaseContext(ConnectionString))
+                {
+                    dbContext.Database.OpenConnection();
+
+                    // ƒобавление новой записи
+                    dbContext.Items.Add(newItem);
+                    dbContext.SaveChanges();
+
+                    // ќбновление списка Items после добавлени€ записи
+                    Items.Add(newItem);
+
+                    dbContext.Database.CloseConnection();
+                }
+
+                MessageBox.Show("Item added successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error adding item: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+       
 
         private void Connect()
         {
@@ -43,9 +70,9 @@ namespace DatabaseViewer.ViewModels
 
                     // ¬ыполнение запроса на выборку всех записей из таблицы "Items"
                     var query = dbContext.Items.ToList();
-
                     Items = new ObservableCollection<Item>(query);
-
+                    var newItem = new Item { Id = 1, Name = "John", Surname = "Doe", Year = 1990, NumContrakt = "ABC123", Pay = 1000 };
+                    AddItem(newItem);
                     dbContext.Database.CloseConnection();
                 }
 
