@@ -5,7 +5,7 @@ using System.Windows;
 using Microsoft.Toolkit.Mvvm.ComponentModel;
 using Microsoft.Toolkit.Mvvm.Input;
 using DatabaseViewer.Models;
-using System.Data.SqlClient;
+using MySql.Data.MySqlClient;
 
 namespace DatabaseViewer.ViewModels
 {
@@ -92,11 +92,11 @@ namespace DatabaseViewer.ViewModels
         {
             try
             {
-                using (var connection = new SqlConnection(ConnectionString))
+                using (var connection = new MySqlConnection(ConnectionString))
                 {
                     connection.Open();
 
-                    var command = new SqlCommand("INSERT INTO Items (Name, Surname, Year, NumContrakt, Pay) VALUES (@Name, @Surname, @Year, @NumContrakt, @Pay)", connection);
+                    var command = new MySqlCommand("INSERT INTO Items (Name, Surname, Year, NumContrakt, Pay) VALUES (@Name, @Surname, @Year, @NumContrakt, @Pay)", connection);
                     command.Parameters.AddWithValue("@Name", newItem.Name);
                     command.Parameters.AddWithValue("@Surname", newItem.Surname);
                     command.Parameters.AddWithValue("@Year", newItem.Year);
@@ -123,11 +123,11 @@ namespace DatabaseViewer.ViewModels
         {
             try
             {
-                using (var connection = new SqlConnection(ConnectionString))
+                using (var connection = new MySqlConnection(ConnectionString))
                 {
                     connection.Open();
 
-                    var command = new SqlCommand("DELETE FROM Items WHERE Id = @Id", connection);
+                    var command = new MySqlCommand("DELETE FROM Items WHERE Id = @Id", connection);
                     command.Parameters.AddWithValue("@Id", itemToRemove.Id);
 
                     command.ExecuteNonQuery();
@@ -150,13 +150,13 @@ namespace DatabaseViewer.ViewModels
         {
             try
             {
-                using (var connection = new SqlConnection(ConnectionString))
+                using (var connection = new MySqlConnection(ConnectionString))
                 {
                     connection.Open();
 
                     // Загрузка данных из базы данных
                     Items.Clear();
-                    var command = new SqlCommand("SELECT * FROM Items", connection);
+                    var command = new MySqlCommand("SELECT * FROM Items", connection);
                     var reader = command.ExecuteReader();
                     while (reader.Read())
                     {
@@ -185,7 +185,6 @@ namespace DatabaseViewer.ViewModels
                 MessageBox.Show($"Error connecting to the database: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-
 
         private void SortItems()
         {
