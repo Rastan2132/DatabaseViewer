@@ -1,10 +1,10 @@
+using System;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Windows;
 using Microsoft.Toolkit.Mvvm.ComponentModel;
 using Microsoft.Toolkit.Mvvm.Input;
 using DatabaseViewer.Models;
-using System.Collections.ObjectModel;
-using System.Windows;
-using System;
-using System.Linq;
 using Microsoft.EntityFrameworkCore;
 
 namespace DatabaseViewer.ViewModels
@@ -96,15 +96,14 @@ namespace DatabaseViewer.ViewModels
                 {
                     dbContext.Database.OpenConnection();
 
-                    // Добавление новой записи
                     dbContext.Items.Add(newItem);
                     dbContext.SaveChanges();
 
-                    // Обновление списка Items после добавления записи
-                    Items.Add(newItem);
-
                     dbContext.Database.CloseConnection();
                 }
+
+                Items.Add(newItem);
+                SortItems();
 
                 MessageBox.Show("Item added successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
@@ -122,21 +121,14 @@ namespace DatabaseViewer.ViewModels
                 {
                     dbContext.Database.OpenConnection();
 
-                    // Поиск записи для удаления
-                    var existingItem = dbContext.Items.FirstOrDefault(i => i.Id == itemToRemove.Id);
-
-                    if (existingItem != null)
-                    {
-                        // Удаление записи
-                        dbContext.Items.Remove(existingItem);
-                        dbContext.SaveChanges();
-
-                        // Обновление списка Items после удаления записи
-                        Items.Remove(itemToRemove);
-                    }
+                    dbContext.Items.Remove(itemToRemove);
+                    dbContext.SaveChanges();
 
                     dbContext.Database.CloseConnection();
                 }
+
+                Items.Remove(itemToRemove);
+                SortItems();
 
                 MessageBox.Show("Item removed successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
@@ -155,7 +147,12 @@ namespace DatabaseViewer.ViewModels
                     dbContext.Database.OpenConnection();
 
                     // Загрузка данных из базы данных
-                    Items = new ObservableCollection<Item>(dbContext.Items);
+                    Items.Clear();
+                    var items = dbContext.Items.ToList();
+                    foreach (var item in items)
+                    {
+                        Items.Add(item);
+                    }
 
                     dbContext.Database.CloseConnection();
                 }
@@ -169,6 +166,7 @@ namespace DatabaseViewer.ViewModels
                 MessageBox.Show($"Error connecting to the database: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
 
         private void SortItems()
         {
