@@ -16,6 +16,7 @@ namespace DatabaseViewer.ViewModels
         private ObservableCollection<Item> sortedItems;
         private Item newItem;
         private string sortBy;
+        private MySqlConnection connection; // ƒобавлено поле дл€ хранени€ соединени€ с базой данных
 
         public string ConnectionString
         {
@@ -95,21 +96,16 @@ namespace DatabaseViewer.ViewModels
         {
             try
             {
-                using (var connection = new MySqlConnection(ConnectionString))
-                {
-                    connection.Open();
+                OpenConnection();
 
-                    var command = new MySqlCommand("INSERT INTO user (Name, Surname, Year, NumContrakt, Pay) VALUES (@Name, @Surname, @Year, @NumContrakt, @Pay)", connection);
-                    command.Parameters.AddWithValue("@Name", newItem.Name);
-                    command.Parameters.AddWithValue("@Surname", newItem.Surname);
-                    command.Parameters.AddWithValue("@Year", newItem.Year);
-                    command.Parameters.AddWithValue("@NumComtrakt", newItem.NumContrakt);
-                    command.Parameters.AddWithValue("@Pay", newItem.Pay);
+                var command = new MySqlCommand("INSERT INTO user (Name, Surname, Year, NumContrakt, Pay) VALUES (@Name, @Surname, @Year, @NumContrakt, @Pay)", connection);
+                command.Parameters.AddWithValue("@Name", newItem.Name);
+                command.Parameters.AddWithValue("@Surname", newItem.Surname);
+                command.Parameters.AddWithValue("@Year", newItem.Year);
+                command.Parameters.AddWithValue("@NumComtrakt", newItem.NumContrakt);
+                command.Parameters.AddWithValue("@Pay", newItem.Pay);
 
-                    command.ExecuteNonQuery();
-
-                    connection.Close();
-                }
+                command.ExecuteNonQuery();
 
                 Items.Add(newItem);
                 SortItems();
@@ -120,23 +116,22 @@ namespace DatabaseViewer.ViewModels
             {
                 MessageBox.Show($"Error adding item: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+            finally
+            {
+                CloseConnection();
+            }
         }
 
         private void RemoveItem(Item itemToRemove)
         {
             try
             {
-                using (var connection = new MySqlConnection(ConnectionString))
-                {
-                    connection.Open();
+                OpenConnection();
 
-                    var command = new MySqlCommand("DELETE FROM user WHERE Id = @Id", connection);
-                    command.Parameters.AddWithValue("@Id", itemToRemove.Id);
+                var command = new MySqlCommand("DELETE FROM user WHERE Id = @Id", connection);
+                command.Parameters.AddWithValue("@Id", itemToRemove.Id);
 
-                    command.ExecuteNonQuery();
-
-                    connection.Close();
-                }
+                command.ExecuteNonQuery();
 
                 Items.Remove(itemToRemove);
                 SortItems();
@@ -147,37 +142,35 @@ namespace DatabaseViewer.ViewModels
             {
                 MessageBox.Show($"Error removing item: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+            finally
+            {
+                CloseConnection();
+            }
         }
 
         private void Connect()
         {
             try
             {
-                using (var connection = new MySqlConnection(ConnectionString))
+                OpenConnection();
+
+                // «агрузка данных из базы данных
+                Items.Clear();
+                var command = new MySqlCommand("SELECT * FROM user", connection);
+                var reader = command.ExecuteReader();
+                while (reader.Read())
                 {
-                    connection.Open();
-
-                    // «агрузка данных из базы данных
-                    Items.Clear();
-                    var command = new MySqlCommand("SELECT * FROM user", connection);
-                    var reader = command.ExecuteReader();
-                    while (reader.Read())
+                    var item = new Item
                     {
-                        var item = new Item
-                        {
-                            Id = (int)reader["Id"],
-                            Name = (string)reader["Name"],
-                            Surname = (string)reader["Surname"],
-                            Year = ((DateTime)reader["Year"]).Year,
-                            NumContrakt = ((int)reader["NumComtrakt"]).ToString(),
-                            Pay = (int)reader["Pay"]
+                        Id = (int)reader["Id"],
+                        Name = (string)reader["Name"],
+                        Surname = (string)reader["Surname"],
+                        Year = ((DateTime)reader["Year"]).Year,
+                        NumContrakt = ((int)reader["NumComtrakt"]).ToString(),
+                        Pay = (int)reader["Pay"]
+                    };
 
-                        };
-
-                        Items.Add(item);
-                    }
-
-                    connection.Close();
+                    Items.Add(item);
                 }
 
                 SortItems();
@@ -187,6 +180,10 @@ namespace DatabaseViewer.ViewModels
             catch (Exception ex)
             {
                 MessageBox.Show($"Error connecting to the database: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                CloseConnection();
             }
         }
 
@@ -219,6 +216,21 @@ namespace DatabaseViewer.ViewModels
                     SortedItems = new ObservableCollection<Item>(Items);
                     break;
             }
+        }
+
+        private void OpenConnection()
+        {
+            if (connection == null)
+                connection = new MySqlConnection(ConnectionString);
+
+            if (connection.State != System.Data.ConnectionState.Open)
+                connection.Open();
+        }
+
+        private void CloseConnection()
+        {
+            if (connection != null && connection.State == System.Data.ConnectionState.Open)
+                connection.Close();
         }
     }
 }
