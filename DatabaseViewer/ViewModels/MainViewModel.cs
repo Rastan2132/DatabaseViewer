@@ -16,7 +16,6 @@ namespace DatabaseViewer.ViewModels
         private ObservableCollection<Item> sortedItems;
         private Item newItem;
         private string sortBy;
-        private MySqlConnection connection; // Äîáàâëåíî ïîëå äëÿ õðàíåíèÿ ñîåäèíåíèÿ ñ áàçîé äàííûõ
 
         public string ConnectionString
         {
@@ -62,81 +61,91 @@ namespace DatabaseViewer.ViewModels
         {
             ConnectCommand = new RelayCommand(Connect);
             AddCommand = new RelayCommand(Add);
-            RemoveCommand = new RelayCommand<Item>(Remove);
+            RemoveCommand = new RelayCommand(Remove);
 
-            // Èíèöèàëèçàöèÿ íîâîãî ýëåìåíòà
+            // Инициализация нового элемента
             NewItem = new Item();
 
-            // Èíèöèàëèçàöèÿ êîëëåêöèè Items
+            // Инициализация SortedItems
             Items = new ObservableCollection<Item>();
-
-            // Èíèöèàëèçàöèÿ êîëëåêöèè SortedItems
             SortedItems = new ObservableCollection<Item>();
 
-            // Óñòàíîâêà íà÷àëüíîé ñîðòèðîâêè
+            // Установка начальной сортировки
             SortItems();
         }
 
         private void Add()
         {
-            // Äîáàâëåíèå íîâîãî ýëåìåíòà
+            // Добавление нового элемента
             AddItem(NewItem);
 
-            // Î÷èñòêà ïîëåé äëÿ ââîäà
+            // Очистка полей для ввода
             NewItem = new Item();
         }
 
-        private void Remove(Item itemToRemove)
+        private void Remove()
         {
-            // Óäàëåíèå ýëåìåíòà
-            RemoveItem(itemToRemove);
+            if (NewItem == null)
+            {
+                MessageBox.Show("No item selected.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            // Удаление элемента
+            RemoveItem();
         }
 
         private void AddItem(Item newItem)
         {
             try
             {
-                OpenConnection();
+                using (var connection = new MySqlConnection(ConnectionString))
+                {
+                    connection.Open();
 
-                var command = new MySqlCommand("INSERT INTO user (Name, Surname, Year, NumContrakt, Pay) VALUES (@Name, @Surname, @Year, @NumContrakt, @Pay)", connection);
-                command.Parameters.AddWithValue("@Name", newItem.Name);
-                command.Parameters.AddWithValue("@Surname", newItem.Surname);
-                command.Parameters.AddWithValue("@Year", newItem.Year);
-                command.Parameters.AddWithValue("@NumComtrakt", newItem.NumContrakt);
-                command.Parameters.AddWithValue("@Pay", newItem.Pay);
+                    var command = new MySqlCommand("INSERT INTO user (Name, Surname, Year, NumComtrakt, Pay) VALUES (@Name, @Surname, @Year, @NumComtrakt, @Pay)", connection);
+                    command.Parameters.AddWithValue("@Name", newItem.Name);
+                    command.Parameters.AddWithValue("@Surname", newItem.Surname);
 
-                command.ExecuteNonQuery();
+                    var yearString = new DateOnly(newItem.Year, 1, 1).ToString("yyyy-MM-dd");
+                    command.Parameters.AddWithValue("@Year", yearString);
+
+                    command.Parameters.AddWithValue("@NumComtrakt", newItem.NumContrakt);
+                    command.Parameters.AddWithValue("@Pay", newItem.Pay);
+
+                    command.ExecuteNonQuery();
+
+                    connection.Close();
+                }
 
                 Items.Add(newItem);
                 SortItems();
 
                 MessageBox.Show("Item added successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
-            catch (MySqlException ex)
-            {
-                MessageBox.Show($"Error adding item: {ex.Message}\nError code: {ex.ErrorCode}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error adding item: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            finally
-            {
-                CloseConnection();
-            }
         }
 
-
-        private void RemoveItem(Item itemToRemove)
+        private void RemoveItem()
         {
+            var itemToRemove = NewItem;
+
             try
             {
-                OpenConnection();
+                using (var connection = new MySqlConnection(ConnectionString))
+                {
+                    connection.Open();
 
-                var command = new MySqlCommand("DELETE FROM user WHERE Id = @Id", connection);
-                command.Parameters.AddWithValue("@Id", itemToRemove.Id);
+                    var command = new MySqlCommand("DELETE FROM user WHERE Id = @Id", connection);
+                    command.Parameters.AddWithValue("@Id", itemToRemove.Id);
 
-                command.ExecuteNonQuery();
+                    command.ExecuteNonQuery();
+
+                    connection.Close();
+                }
 
                 Items.Remove(itemToRemove);
                 SortItems();
@@ -147,35 +156,36 @@ namespace DatabaseViewer.ViewModels
             {
                 MessageBox.Show($"Error removing item: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            finally
-            {
-                CloseConnection();
-            }
         }
 
         private void Connect()
         {
             try
             {
-                OpenConnection();
-
-                // Çàãðóçêà äàííûõ èç áàçû äàííûõ
-                Items.Clear();
-                var command = new MySqlCommand("SELECT * FROM user", connection);
-                var reader = command.ExecuteReader();
-                while (reader.Read())
+                using (var connection = new MySqlConnection(ConnectionString))
                 {
-                    var item = new Item
-                    {
-                        Id = (int)reader["Id"],
-                        Name = (string)reader["Name"],
-                        Surname = (string)reader["Surname"],
-                        Year = ((DateTime)reader["Year"]).Year,
-                        NumContrakt = ((int)reader["NumComtrakt"]).ToString(),
-                        Pay = (int)reader["Pay"]
-                    };
+                    connection.Open();
 
-                    Items.Add(item);
+                    // Загрузка данных из базы данных
+                    Items.Clear();
+                    var command = new MySqlCommand("SELECT * FROM user", connection);
+                    var reader = command.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        var item = new Item
+                        {
+                            Id = (int)reader["Id"],
+                            Name = (string)reader["Name"],
+                            Surname = (string)reader["Surname"],
+                            Year = ((DateTime)reader["Year"]).Year,
+                            NumContrakt = ((int)reader["NumComtrakt"]).ToString(),
+                            Pay = (int)reader["Pay"]
+                        };
+
+                        Items.Add(item);
+                    }
+
+                    connection.Close();
                 }
 
                 SortItems();
@@ -185,10 +195,6 @@ namespace DatabaseViewer.ViewModels
             catch (Exception ex)
             {
                 MessageBox.Show($"Error connecting to the database: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            finally
-            {
-                CloseConnection();
             }
         }
 
@@ -211,31 +217,16 @@ namespace DatabaseViewer.ViewModels
                 case "Year":
                     SortedItems = new ObservableCollection<Item>(Items.OrderBy(item => item.Year));
                     break;
-                case "NumContrakt":
+                case "NumComtrakt":
                     SortedItems = new ObservableCollection<Item>(Items.OrderBy(item => item.NumContrakt));
                     break;
                 case "Pay":
                     SortedItems = new ObservableCollection<Item>(Items.OrderBy(item => item.Pay));
                     break;
                 default:
-                    SortedItems = new ObservableCollection<Item>(Items);
+                    SortedItems = Items;
                     break;
             }
-        }
-
-        private void OpenConnection()
-        {
-            if (connection == null)
-                connection = new MySqlConnection(ConnectionString);
-
-            if (connection.State != System.Data.ConnectionState.Open)
-                connection.Open();
-        }
-
-        private void CloseConnection()
-        {
-            if (connection != null && connection.State == System.Data.ConnectionState.Open)
-                connection.Close();
         }
     }
 }
