@@ -13,6 +13,7 @@ namespace DatabaseViewer.ViewModels
     {
         private string connectionString;
         private ObservableCollection<Item> items;
+        private Item newItem;
 
         public string ConnectionString
         {
@@ -26,12 +27,41 @@ namespace DatabaseViewer.ViewModels
             set => SetProperty(ref items, value);
         }
 
+        public Item NewItem
+        {
+            get => newItem;
+            set => SetProperty(ref newItem, value);
+        }
+
         public IRelayCommand ConnectCommand { get; }
+        public IRelayCommand AddCommand { get; }
+        public IRelayCommand RemoveCommand { get; }
 
         public MainViewModel()
         {
             ConnectCommand = new RelayCommand(Connect);
+            AddCommand = new RelayCommand(Add);
+            RemoveCommand = new RelayCommand<Item>(Remove);
+
+            // Инициализация нового элемента
+            NewItem = new Item();
         }
+
+        private void Add()
+        {
+            // Добавление нового элемента
+            AddItem(NewItem);
+
+            // Очистка полей для ввода
+            NewItem = new Item();
+        }
+
+        private void Remove(Item itemToRemove)
+        {
+            // Удаление элемента
+            RemoveItem(itemToRemove);
+        }
+
         private void AddItem(Item newItem)
         {
             try
@@ -58,6 +88,37 @@ namespace DatabaseViewer.ViewModels
             }
         }
 
+        private void RemoveItem(Item itemToRemove)
+        {
+            try
+            {
+                using (var dbContext = new DatabaseContext(ConnectionString))
+                {
+                    dbContext.Database.OpenConnection();
+
+                    // Поиск записи для удаления
+                    var existingItem = dbContext.Items.FirstOrDefault(i => i.Id == itemToRemove.Id);
+
+                    if (existingItem != null)
+                    {
+                        // Удаление записи
+                        dbContext.Items.Remove(existingItem);
+                        dbContext.SaveChanges();
+
+                        // Обновление списка Items после удаления записи
+                        Items.Remove(itemToRemove);
+                    }
+
+                    dbContext.Database.CloseConnection();
+                }
+
+                MessageBox.Show("Item removed successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error removing item: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
 
         private void Connect()
         {
@@ -72,7 +133,6 @@ namespace DatabaseViewer.ViewModels
                     Items = new ObservableCollection<Item>(query);
                     dbContext.Database.CloseConnection();
                 }
-
 
                 MessageBox.Show("Connected to the database.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
