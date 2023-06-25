@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 using Microsoft.EntityFrameworkCore;
 using System.Windows;
 using System;
+using System.Linq;
 
 namespace DatabaseViewer.ViewModels
 {
@@ -40,10 +41,14 @@ namespace DatabaseViewer.ViewModels
                 {
                     dbContext.Database.OpenConnection();
 
-                   //////////////////////////////////////////
+                    // Выполнение запроса на выборку всех записей из таблицы "Items"
+                    var query = dbContext.Items.ToList();
+
+                    Items = new ObservableCollection<Item>(query);
 
                     dbContext.Database.CloseConnection();
                 }
+
 
                 MessageBox.Show("Connected to the database.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
